@@ -1,0 +1,140 @@
+local VehicleSeat = script.Parent.VehicleSeat
+
+local Player = VehicleSeat.Occupant
+
+local Body = script.Parent.Parent.Body
+
+local WheelsFold = script.Parent.Parent.Wheels
+
+local MotorsFold = script.Parent.Parent.Motors
+
+local DriveMotors = MotorsFold.DriveMotors
+local SteerMotors = MotorsFold.SteeringMotors
+
+local FLMotor = DriveMotors.FLDrive
+local FRMotor = DriveMotors.FRDrive
+local RLMotor = DriveMotors.RLDrive
+local RRMotor = DriveMotors.RRDrive
+
+local FLTurMotor = SteerMotors.FLSteer
+local FRTurMotor = SteerMotors.FRSteer
+
+local BasePart = script.Parent.Parent.BasePart
+local EnginePart = Body.Engine
+
+local WheelRadius = 2.99 / 2
+
+local FunctionsFold = script.Parent
+local Speed = FunctionsFold.Speed
+local PBrakeVal = FunctionsFold.PBrake
+local Engine = FunctionsFold.Engine
+local Gear = FunctionsFold.Gear
+
+local GUI = FunctionsFold.GUI
+
+local Config = script.Parent:WaitForChild("Configuration")
+
+local ConfigScript = require(script.Parent.Parent.ConfigurationScript)
+
+local RunService = game:GetService("RunService")
+
+local UserInputService = game:GetService("UserInputService")
+
+-- Configuration
+
+local MaxSpeed = Config.MaxSPD.Value
+
+local ConfigMaxSpeed = Config.ConfigMaxSPD.Value
+
+local MaxRVRS = Config.MaxRVS.Value
+
+local Acceleration = Config.AccelVal.Value
+
+local TurningAngle = Config.TurningAng.Value
+
+local TurningSpeed = Config.TurningSpd.Value
+
+local BrakingForce = Config.BrakeForce.Value
+
+--Sounds Stuff (Don't Edit)
+local EngMinSound = 0.6
+local EngMaxSound = 1.5
+local SoundMaxVelocity = MaxSpeed * WheelRadius
+local Sound = EnginePart:FindFirstChild("Engine")
+
+if Engine.Value == true then
+	Sound:Play()
+else
+	Sound:Stop()
+end
+
+RunService.Heartbeat:Connect(function()
+	local speed = math.abs(BasePart.CFrame.LookVector:Dot(BasePart.AssemblyLinearVelocity))
+	
+	Sound.PlaybackSpeed = EngMinSound + (EngMaxSound - EngMinSound) * math.min(speed / SoundMaxVelocity, 1)
+	
+	Speed.Value = speed
+	
+	GUI.Value.MainFrame.Speedo.Text = Speed.Value
+end)
+	
+-- Calibration
+RLMotor.MotorMaxAcceleration = Acceleration
+RRMotor.MotorMaxAcceleration = Acceleration
+FRMotor.MotorMaxAcceleration = Acceleration
+FLMotor.MotorMaxAcceleration = Acceleration
+FLTurMotor.AngularSpeed = TurningSpeed
+FRTurMotor.AngularSpeed = TurningSpeed
+
+-- Steering
+VehicleSeat.Changed:Connect(function()
+	if VehicleSeat.Steer == -1 then
+		FLTurMotor.TargetAngle = -TurningAngle
+		FRTurMotor.TargetAngle = TurningAngle
+	elseif VehicleSeat.Steer == 1 then
+		FLTurMotor.TargetAngle = TurningAngle
+		FRTurMotor.TargetAngle = -TurningAngle
+	elseif VehicleSeat.Steer == 0 then
+		FLTurMotor.TargetAngle = 0
+		FRTurMotor.TargetAngle = 0
+	end
+end)
+
+--Driving
+while true do
+	if Engine.Value == true and PBrakeVal.Value == false then
+		if VehicleSeat.Throttle == -1 then
+			FRMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
+			FLMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
+			RRMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
+			RLMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
+			RLMotor.MotorMaxAcceleration = BrakingForce
+			RRMotor.MotorMaxAcceleration = BrakingForce
+		elseif VehicleSeat.Throttle == 1 then
+			FRMotor.AngularVelocity = MaxSpeed * VehicleSeat.ThrottleFloat
+			FLMotor.AngularVelocity = MaxSpeed * VehicleSeat.ThrottleFloat
+			RRMotor.AngularVelocity = MaxSpeed * VehicleSeat.ThrottleFloat
+			RLMotor.AngularVelocity = MaxSpeed * VehicleSeat.ThrottleFloat
+			RLMotor.MotorMaxAcceleration = Acceleration
+			RRMotor.MotorMaxAcceleration = Acceleration
+		elseif VehicleSeat.Throttle == 0 then
+			FRMotor.AngularVelocity = 0
+			FLMotor.AngularVelocity = 0
+			RRMotor.AngularVelocity = 0
+			RLMotor.AngularVelocity = 0
+			RLMotor.MotorMaxAcceleration = Acceleration
+			RRMotor.MotorMaxAcceleration = Acceleration
+		end
+	wait()
+	end
+end
+
+Gear.Changed:Connect(function()
+	if Gear.Value == 1 then
+		MaxSpeed = ConfigMaxSpeed
+	elseif Gear.Value == 0 then
+		MaxSpeed = 0
+	elseif Gear.Value == -1 then
+		MaxSpeed = MaxRVRS
+	end
+end)
