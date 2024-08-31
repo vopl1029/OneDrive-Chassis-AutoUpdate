@@ -20,15 +20,11 @@ local FLTurMotor = SteerMotors.FLSteer
 local FRTurMotor = SteerMotors.FRSteer
 
 local BasePart = script.Parent.Parent.BasePart
-local EnginePart = Body.Engine
+local BatterySound = Body.BatterySoundPart
 
 local WheelRadius = 2.99 / 2
 
 local FunctionsFold = script.Parent
-local Speed = FunctionsFold.Speed
-local PBrakeVal = FunctionsFold.PBrake
-local Engine = FunctionsFold.Engine
-local Gear = FunctionsFold.Gear
 
 local GUI = FunctionsFold.GUI
 
@@ -39,6 +35,12 @@ local ConfigScript = require(script.Parent.Parent.ConfigurationScript)
 local RunService = game:GetService("RunService")
 
 local UserInputService = game:GetService("UserInputService")
+
+-- Func Vals
+local Speed = Config.Speed
+local PBrakeVal = Config.PBrake
+local Battery = Config.Battery
+local Gear = Config.Gear
 
 -- Configuration
 
@@ -57,12 +59,12 @@ local TurningSpeed = Config.TurningSpd.Value
 local BrakingForce = Config.BrakeForce.Value
 
 --Sounds Stuff (Don't Edit)
-local EngMinSound = 0.6
-local EngMaxSound = 1.5
+local BatMinSound = 0.6
+local BatMaxSound = 1.5
 local SoundMaxVelocity = MaxSpeed * WheelRadius
-local Sound = EnginePart:FindFirstChild("Engine")
+local Sound = BatterySound:FindFirstChild("Battery")
 
-if Engine.Value == true then
+if Battery.Value == true then
 	Sound:Play()
 else
 	Sound:Stop()
@@ -71,7 +73,7 @@ end
 RunService.Heartbeat:Connect(function()
 	local speed = math.abs(BasePart.CFrame.LookVector:Dot(BasePart.AssemblyLinearVelocity))
 
-	Sound.PlaybackSpeed = EngMinSound + (EngMaxSound - EngMinSound) * math.min(speed / SoundMaxVelocity, 1)
+	Sound.PlaybackSpeed = BatMinSound + (BatMaxSound - BatMinSound) * math.min(speed / SoundMaxVelocity, 1)
 
 	Speed.Value = speed
 
@@ -102,7 +104,7 @@ end)
 
 --Driving
 while true do
-	if Engine.Value == true and PBrakeVal.Value == false then
+	if Battery.Value == true and PBrakeVal.Value == false then
 		if VehicleSeat.Throttle == -1 then
 			FRMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
 			FLMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
@@ -138,4 +140,3 @@ Gear.Changed:Connect(function()
 		MaxSpeed = MaxRVRS
 	end
 end)
-
