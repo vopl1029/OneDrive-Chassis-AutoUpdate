@@ -37,38 +37,28 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 -- Func Vals
-local Speed = Config.Speed
-local PBrakeVal = Config.PBrake
-local Battery = Config.Battery
-local Gear = Config.Gear
-
+local Speed = FunctionsFold:WaitForChild("Speed")
+local PBrakeVal = FunctionsFold.PBrake
+local Battery = FunctionsFold:WaitForChild("Battery")
+local Gear = FunctionsFold:WaitForChild("Gear")
+local MaxSpeed = FunctionsFold.MaxSPD
 -- Configuration
 
-local MaxSpeed = Config.MaxSPD.Value
+local MaxRVRS = Config.MaxRVS
 
-local ConfigMaxSpeed = Config.ConfigMaxSPD.Value
+local Acceleration = Config.AccelVal
 
-local MaxRVRS = Config.MaxRVS.Value
+local TurningAngle = Config.TurningAng
 
-local Acceleration = Config.AccelVal.Value
+local TurningSpeed = Config.TurningSpd
 
-local TurningAngle = Config.TurningAng.Value
-
-local TurningSpeed = Config.TurningSpd.Value
-
-local BrakingForce = Config.BrakeForce.Value
+local BrakingForce = Config.BrakeForce
 
 --Sounds Stuff (Don't Edit)
 local BatMinSound = 0.6
 local BatMaxSound = 1.5
-local SoundMaxVelocity = MaxSpeed * WheelRadius
-local Sound = BatterySound:FindFirstChild("Battery")
-
-if Battery.Value == true then
-	Sound:Play()
-else
-	Sound:Stop()
-end
+local SoundMaxVelocity = ConfigScript.BatterySpecs.MaxSpeed * WheelRadius
+local Sound = BatterySound:FindFirstChild("Battery", true)
 
 RunService.Heartbeat:Connect(function()
 	local speed = math.abs(BasePart.CFrame.LookVector:Dot(BasePart.AssemblyLinearVelocity))
@@ -81,62 +71,73 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- Calibration
-RLMotor.MotorMaxAcceleration = Acceleration
-RRMotor.MotorMaxAcceleration = Acceleration
-FRMotor.MotorMaxAcceleration = Acceleration
-FLMotor.MotorMaxAcceleration = Acceleration
-FLTurMotor.AngularSpeed = TurningSpeed
-FRTurMotor.AngularSpeed = TurningSpeed
+RLMotor.MotorMaxAcceleration = Acceleration.Value
+RRMotor.MotorMaxAcceleration = Acceleration.Value
+FRMotor.MotorMaxAcceleration = Acceleration.Value
+FLMotor.MotorMaxAcceleration = Acceleration.Value
+FLTurMotor.AngularSpeed = TurningSpeed.Value
+FRTurMotor.AngularSpeed = TurningSpeed.Value
+
+Gear.Changed:Connect(function(value:number)
+	if Gear.Value == 1 then
+		MaxSpeed.Value = ConfigScript.BatterySpecs.MaxSpeed
+	elseif Gear.Value == 0 then
+		MaxSpeed.Value = 0
+	elseif Gear.Value == -1 then
+		MaxSpeed.Value = ConfigScript.BatterySpecs.MaxRVS
+	end
+end)
+
+PBrakeVal.Changed:Connect(function(value:number)
+	print('PBrakeVal is',value)
+end)
 
 -- Steering
 VehicleSeat.Changed:Connect(function()
 	if VehicleSeat.Steer == -1 then
-		FLTurMotor.TargetAngle = -TurningAngle
-		FRTurMotor.TargetAngle = TurningAngle
+		FLTurMotor.TargetAngle = -TurningAngle.Value
+		FRTurMotor.TargetAngle = TurningAngle.Value
 	elseif VehicleSeat.Steer == 1 then
-		FLTurMotor.TargetAngle = TurningAngle
-		FRTurMotor.TargetAngle = -TurningAngle
+		FLTurMotor.TargetAngle = TurningAngle.Value
+		FRTurMotor.TargetAngle = -TurningAngle.Value
 	elseif VehicleSeat.Steer == 0 then
 		FLTurMotor.TargetAngle = 0
 		FRTurMotor.TargetAngle = 0
 	end
-end)
-
---Driving
-while true do
 	if Battery.Value == true and PBrakeVal.Value == false then
 		if VehicleSeat.Throttle == -1 then
 			FRMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
 			FLMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
 			RRMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
 			RLMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
-			RLMotor.MotorMaxAcceleration = BrakingForce
-			RRMotor.MotorMaxAcceleration = BrakingForce
+			RLMotor.MotorMaxAcceleration = BrakingForce.Value
+			RRMotor.MotorMaxAcceleration = BrakingForce.Value
 		elseif VehicleSeat.Throttle == 1 then
-			FRMotor.AngularVelocity = MaxSpeed * VehicleSeat.ThrottleFloat
-			FLMotor.AngularVelocity = MaxSpeed * VehicleSeat.ThrottleFloat
-			RRMotor.AngularVelocity = MaxSpeed * VehicleSeat.ThrottleFloat
-			RLMotor.AngularVelocity = MaxSpeed * VehicleSeat.ThrottleFloat
-			RLMotor.MotorMaxAcceleration = Acceleration
-			RRMotor.MotorMaxAcceleration = Acceleration
+			FRMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
+			FLMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
+			RRMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
+			RLMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
+			RLMotor.MotorMaxAcceleration = Acceleration.Value
+			RRMotor.MotorMaxAcceleration = Acceleration.Value
 		elseif VehicleSeat.Throttle == 0 then
 			FRMotor.AngularVelocity = 0
 			FLMotor.AngularVelocity = 0
 			RRMotor.AngularVelocity = 0
 			RLMotor.AngularVelocity = 0
-			RLMotor.MotorMaxAcceleration = Acceleration
-			RRMotor.MotorMaxAcceleration = Acceleration
+			RLMotor.MotorMaxAcceleration = Acceleration.Value
+			RRMotor.MotorMaxAcceleration = Acceleration.Value
 		end
-		wait()
-	end
-end
-
-Gear.Changed:Connect(function()
-	if Gear.Value == 1 then
-		MaxSpeed = ConfigMaxSpeed
-	elseif Gear.Value == 0 then
-		MaxSpeed = 0
-	elseif Gear.Value == -1 then
-		MaxSpeed = MaxRVRS
+	elseif Battery.Value == false then
+		FRMotor.AngularVelocity = 0
+		FLMotor.AngularVelocity = 0
+		RRMotor.AngularVelocity = 0
+		RLMotor.AngularVelocity = 0
+		RLMotor.MotorMaxAcceleration = Acceleration.Value
+		RRMotor.MotorMaxAcceleration = Acceleration.Value
 	end
 end)
+
+--Driving
+while true do
+	wait()
+end
