@@ -42,6 +42,7 @@ local PBrakeVal = FunctionsFold.PBrake
 local Battery = FunctionsFold:WaitForChild("Battery")
 local Gear = FunctionsFold:WaitForChild("Gear")
 local MaxSpeed = FunctionsFold.MaxSPD
+local AdvancedSpd = FunctionsFold.AdvancedSPD
 -- Configuration
 
 local MaxRVRS = Config.MaxRVS
@@ -92,8 +93,8 @@ PBrakeVal.Changed:Connect(function(value:number)
 	print('PBrakeVal is',value)
 end)
 
--- Steering
-VehicleSeat.Changed:Connect(function()
+-- Driving
+while true do
 	if VehicleSeat.Steer == -1 then
 		FLTurMotor.TargetAngle = -TurningAngle.Value
 		FRTurMotor.TargetAngle = TurningAngle.Value
@@ -110,15 +111,25 @@ VehicleSeat.Changed:Connect(function()
 			FLMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
 			RRMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
 			RLMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
-			RLMotor.MotorMaxAcceleration = BrakingForce.Value
-			RRMotor.MotorMaxAcceleration = BrakingForce.Value
+			if AdvancedSpd.Value == false then
+				RLMotor.MotorMaxAcceleration = BrakingForce.Value
+				RRMotor.MotorMaxAcceleration = BrakingForce.Value
+			elseif AdvancedSpd.Value == true then
+				RLMotor.MotorMaxAcceleration = ConfigScript.BatterySpecs.AdvancedBrakeForce
+				RRMotor.MotorMaxAcceleration = ConfigScript.BatterySpecs.AdvancedBrakeForce
+			end
 		elseif VehicleSeat.Throttle == 1 then
 			FRMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
 			FLMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
 			RRMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
 			RLMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
-			RLMotor.MotorMaxAcceleration = Acceleration.Value
-			RRMotor.MotorMaxAcceleration = Acceleration.Value
+			if AdvancedSpd.Value == false then
+				RLMotor.MotorMaxAcceleration = Acceleration.Value
+				RRMotor.MotorMaxAcceleration = Acceleration.Value
+			elseif AdvancedSpd.Value == true then
+				RLMotor.MotorMaxAcceleration = ConfigScript.BatterySpecs.AdvancedAccelForce
+				RRMotor.MotorMaxAcceleration = ConfigScript.BatterySpecs.AdvancedAccelForce
+			end
 		elseif VehicleSeat.Throttle == 0 then
 			FRMotor.AngularVelocity = 0
 			FLMotor.AngularVelocity = 0
@@ -135,9 +146,9 @@ VehicleSeat.Changed:Connect(function()
 		RLMotor.MotorMaxAcceleration = Acceleration.Value
 		RRMotor.MotorMaxAcceleration = Acceleration.Value
 	end
-end)
+	wait()
+end
 
---Driving
 while true do
 	wait()
 end
