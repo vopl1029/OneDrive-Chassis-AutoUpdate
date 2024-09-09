@@ -89,10 +89,6 @@ Gear.Changed:Connect(function(value:number)
 	end
 end)
 
-PBrakeVal.Changed:Connect(function(value:number)
-	print('PBrakeVal is',value)
-end)
-
 -- Driving
 while true do
 	if VehicleSeat.Steer == -1 then
