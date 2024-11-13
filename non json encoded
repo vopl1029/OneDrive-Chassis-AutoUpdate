@@ -18,6 +18,7 @@ local RRMotor = DriveMotors.RRDrive
 
 local FLTurMotor = SteerMotors.FLSteer
 local FRTurMotor = SteerMotors.FRSteer
+local SteeringWheelMotor = SteerMotors.SteeringWheel
 
 local BasePart = script.Parent.Parent.BasePart
 local BatterySound = Body.BatterySoundPart
@@ -27,6 +28,8 @@ local WheelRadius = 2.99 / 2
 local FunctionsFold = script.Parent
 
 local GUI = FunctionsFold.GUI
+
+local Mousesteer = FunctionsFold.MouseSteering
 
 local Config = script.Parent:WaitForChild("Configuration")
 
@@ -41,6 +44,7 @@ local Speed = FunctionsFold:WaitForChild("Speed")
 local PBrakeVal = FunctionsFold.PBrake
 local Battery = FunctionsFold:WaitForChild("Battery")
 local Gear = FunctionsFold:WaitForChild("Gear")
+local StaBrake = FunctionsFold:WaitForChild("StationBrake")
 local MaxSpeed = FunctionsFold.MaxSPD
 local AdvancedSpd = FunctionsFold.AdvancedSPD
 -- Configuration
@@ -56,8 +60,8 @@ local TurningSpeed = Config.TurningSpd
 local BrakingForce = Config.BrakeForce
 
 --Sounds Stuff (Don't Edit)
-local BatMinSound = 0.6
-local BatMaxSound = 1.5
+local BatMinSound = 0.4
+local BatMaxSound = 2
 local SoundMaxVelocity = ConfigScript.BatterySpecs.MaxSpeed * WheelRadius
 local Sound = BatterySound:FindFirstChild("Battery", true)
 
@@ -78,6 +82,7 @@ FRMotor.MotorMaxAcceleration = Acceleration.Value
 FLMotor.MotorMaxAcceleration = Acceleration.Value
 FLTurMotor.AngularSpeed = TurningSpeed.Value
 FRTurMotor.AngularSpeed = TurningSpeed.Value
+SteeringWheelMotor.AngularSpeed = TurningSpeed.Value * 2
 
 Gear.Changed:Connect(function(value:number)
 	if Gear.Value == 1 then
@@ -94,14 +99,17 @@ while true do
 	if VehicleSeat.Steer == -1 then
 		FLTurMotor.TargetAngle = -TurningAngle.Value
 		FRTurMotor.TargetAngle = TurningAngle.Value
+		SteeringWheelMotor.TargetAngle = 87
 	elseif VehicleSeat.Steer == 1 then
 		FLTurMotor.TargetAngle = TurningAngle.Value
 		FRTurMotor.TargetAngle = -TurningAngle.Value
+		SteeringWheelMotor.TargetAngle = -87
 	elseif VehicleSeat.Steer == 0 then
 		FLTurMotor.TargetAngle = 0
 		FRTurMotor.TargetAngle = 0
+		SteeringWheelMotor.TargetAngle = 0
 	end
-	if Battery.Value == true and PBrakeVal.Value == false then
+	if Battery.Value == true and PBrakeVal.Value == false and StaBrake.Value == false then
 		if VehicleSeat.Throttle == -1 then
 			FRMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
 			FLMotor.AngularVelocity = 0 * VehicleSeat.ThrottleFloat
@@ -110,9 +118,13 @@ while true do
 			if AdvancedSpd.Value == false then
 				RLMotor.MotorMaxAcceleration = BrakingForce.Value
 				RRMotor.MotorMaxAcceleration = BrakingForce.Value
+				RLMotor.MotorMaxTorque = 35000
+				RRMotor.MotorMaxTorque = 35000
 			elseif AdvancedSpd.Value == true then
 				RLMotor.MotorMaxAcceleration = ConfigScript.BatterySpecs.AdvancedBrakeForce
 				RRMotor.MotorMaxAcceleration = ConfigScript.BatterySpecs.AdvancedBrakeForce
+				RLMotor.MotorMaxTorque = 80000
+				RRMotor.MotorMaxTorque = 80000
 			end
 		elseif VehicleSeat.Throttle == 1 then
 			FRMotor.AngularVelocity = MaxSpeed.Value * VehicleSeat.ThrottleFloat
@@ -122,17 +134,31 @@ while true do
 			if AdvancedSpd.Value == false then
 				RLMotor.MotorMaxAcceleration = Acceleration.Value
 				RRMotor.MotorMaxAcceleration = Acceleration.Value
+				RLMotor.MotorMaxTorque = 35000
+				RRMotor.MotorMaxTorque = 35000
 			elseif AdvancedSpd.Value == true then
 				RLMotor.MotorMaxAcceleration = ConfigScript.BatterySpecs.AdvancedAccelForce
 				RRMotor.MotorMaxAcceleration = ConfigScript.BatterySpecs.AdvancedAccelForce
+				RLMotor.MotorMaxTorque = 70000
+				RRMotor.MotorMaxTorque = 70000
 			end
 		elseif VehicleSeat.Throttle == 0 then
 			FRMotor.AngularVelocity = 0
 			FLMotor.AngularVelocity = 0
 			RRMotor.AngularVelocity = 0
 			RLMotor.AngularVelocity = 0
+			FLMotor.MotorMaxTorque = 35000
+			FRMotor.MotorMaxTorque = 35000
 			RLMotor.MotorMaxAcceleration = Acceleration.Value
 			RRMotor.MotorMaxAcceleration = Acceleration.Value
+			if ConfigScript.ChassisCustomization.CruiseSpeedControl == true then
+				if Speed.Value > 10 then
+					FRMotor.AngularVelocity = 120
+					FLMotor.AngularVelocity = 120
+					FRMotor.MotorMaxTorque = 33700
+					FLMotor.MotorMaxTorque = 33700
+				end
+			end
 		end
 	elseif Battery.Value == false then
 		FRMotor.AngularVelocity = 0
@@ -142,9 +168,6 @@ while true do
 		RLMotor.MotorMaxAcceleration = Acceleration.Value
 		RRMotor.MotorMaxAcceleration = Acceleration.Value
 	end
-	wait()
+	task.wait(0)
 end
 
-while true do
-	wait()
-end
